@@ -468,7 +468,7 @@ static void bb_scan(bool ir_scan, enum scan_type type, uint8_t *buffer, int scan
 		bb_state_move(0);
 		bb_end_state(saved_end_state);
 	}
-	
+#if 0	
 	for (bit_cnt = 0; bit_cnt < scan_size; bit_cnt++) {
 		int val = 0;
 		int tms = (bit_cnt == scan_size-1) ? 1 : 0;
@@ -498,6 +498,26 @@ static void bb_scan(bool ir_scan, enum scan_type type, uint8_t *buffer, int scan
 				buffer[bytec] &= ~bcval;
 		}
 	}
+#endif
+	uint8_t *com;
+	com = malloc(1000);
+	memset(com, 0, 1000);
+	int x = 0;
+	for (bit_cnt = 0; bit_cnt < scan_size; bit_cnt++)
+	{
+		int bytec = bit_cnt/ 8;
+		int n = bit_cnt / 4;
+		if (buffer[bytec] & (1 << (bit_cnt % 8)))
+			com[n] = com[n] | (1<<x);
+		x = (x + 2) % 8;
+	}
+
+	com[0] = com[0] | 0x2;
+	int cbitpairs = scan_size * 2;
+	char *buf = malloc(1000);
+	memset(buf, 0, 1000);
+	if ( !DjtgPutTmsTdiBits(hif, com, buf, cbitpairs, NULL))
+		printf("%s %d %s\n", __FILE__, __LINE__, __FUNCTION__);
 
 	if (tap_get_state() != tap_get_end_state()) {
 		/* we *KNOW* the above loop transitioned out of
